@@ -1,0 +1,66 @@
+{
+    "kdf_version": "0.1",
+    "dataset": {
+        "id": "v002",
+        "created_at": "2026-01-15T00:00:00Z"
+    },
+    "sources": [
+        {
+            "id": "src1",
+            "uri": "urn:example:policy",
+            "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        }
+    ],
+    "documents": [
+        {
+            "id": "doc1",
+            "type": "document",
+            "title": "Policy",
+            "text": "Employees must wear helmets in Zone A.",
+            "children": [
+                {
+                    "id": "p1",
+                    "type": "paragraph",
+                    "text": "Employees must wear helmets in Zone A.",
+                    "children": []
+                }
+            ]
+        }
+    ],
+    "atoms": [
+        {
+            "id": "a1",
+            "type": "rule",
+            "payload": "Employees must wear helmets in Zone A.",
+            "evidence": [
+                {
+                    "source_id": "src1",
+                    "node_path": "document:doc1/paragraph:p1",
+                    "locators": {
+                        "primary": {
+                            "type": "text_offset",
+                            "start": 0,
+                            "end": 38
+                        },
+                        "anchors": [
+                            {
+                                "type": "node_path",
+                                "path": "document:doc1/paragraph:p1"
+                            },
+                            {
+                                "type": "span_fingerprint",
+                                "algo": "sha256",
+                                "value": "50445679505309961cf07c1cf42b20a1edd47cf309dd17625e366b9a83b8b624"
+                            }
+                        ]
+                    },
+                    "validation": {
+                        "status": "valid",
+                        "checked_at": "2026-01-15T00:00:00Z",
+                        "method": "sha256(span)"
+                    }
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,57 @@
+{
+    "kdf_version": "0.1",
+    "dataset": {
+        "id": "i002",
+        "created_at": "2026-01-15T00:00:00Z"
+    },
+    "sources": [
+        {
+            "id": "src1",
+            "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+        }
+    ],
+    "documents": [
+        {
+            "id": "doc1",
+            "type": "document",
+            "text": "ABCDE",
+            "children": [
+                {
+                    "id": "p1",
+                    "type": "paragraph",
+                    "text": "ABCDE",
+                    "children": []
+                }
+            ]
+        }
+    ],
+    "atoms": [
+        {
+            "id": "a1",
+            "type": "fact",
+            "payload": "ABCDE",
+            "evidence": [
+                {
+                    "source_id": "src1",
+                    "node_path": "document:doc1/paragraph:p1",
+                    "locators": {
+                        "primary": {
+                            "type": "text_offset",
+                            "start": 4,
+                            "end": 2
+                        },
+                        "anchors": [
+                            {
+                                "type": "node_path",
+                                "path": "document:doc1/paragraph:p1"
+                            }
+                        ]
+                    },
+                    "validation": {
+                        "status": "valid"
+                    }
+                }
+            ]
+        }
+    ]
+}

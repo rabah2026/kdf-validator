@@ -1,0 +1,66 @@
+{
+    "kdf_version": "0.1",
+    "dataset": {
+        "id": "v004",
+        "created_at": "2026-01-15T00:00:00Z"
+    },
+    "sources": [
+        {
+            "id": "src1",
+            "uri": "urn:example:policy",
+            "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+        }
+    ],
+    "documents": [
+        {
+            "id": "doc1",
+            "type": "document",
+            "title": "Policy",
+            "text": "All visitors must sign in at reception.",
+            "children": [
+                {
+                    "id": "p1",
+                    "type": "paragraph",
+                    "text": "All visitors must sign in at reception.",
+                    "children": []
+                }
+            ]
+        }
+    ],
+    "atoms": [
+        {
+            "id": "a1",
+            "type": "rule",
+            "payload": "All visitors must sign in at reception.",
+            "evidence": [
+                {
+                    "source_id": "src1",
+                    "node_path": "document:doc1/paragraph:p1",
+                    "locators": {
+                        "primary": {
+                            "type": "text_offset",
+                            "start": 0,
+                            "end": 39
+                        },
+                        "anchors": [
+                            {
+                                "type": "node_path",
+                                "path": "document:doc1/paragraph:p1"
+                            },
+                            {
+                                "type": "span_fingerprint",
+                                "algo": "sha256",
+                                "value": "7bf89a8ea82bbfe250b16e3ef72d9bbc87cd1abaab80c4fd88c589018852334a"
+                            }
+                        ]
+                    },
+                    "validation": {
+                        "status": "valid",
+                        "checked_at": "2026-01-15T00:00:00Z",
+                        "method": "sha256(span)"
+                    }
+                }
+            ]
+        }
+    ]
+}

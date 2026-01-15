@@ -1,0 +1,77 @@
+{
+    "kdf_version": "0.1",
+    "dataset": {
+        "id": "e003",
+        "created_at": "2026-01-15T00:00:00Z"
+    },
+    "sources": [
+        {
+            "id": "src1",
+            "sha256": "6666666666666666666666666666666666666666666666666666666666666666"
+        }
+    ],
+    "documents": [
+        {
+            "id": "doc1",
+            "type": "document",
+            "text": "Rule A: Access allowed. Rule B: Access not allowed.",
+            "children": []
+        }
+    ],
+    "atoms": [
+        {
+            "id": "a_allow",
+            "type": "rule",
+            "payload": "Access allowed.",
+            "evidence": [
+                {
+                    "source_id": "src1",
+                    "node_path": "document:doc1",
+                    "locators": {
+                        "primary": {
+                            "type": "text_offset",
+                            "start": 0,
+                            "end": 24
+                        },
+                        "anchors": [
+                            {
+                                "type": "node_path",
+                                "path": "document:doc1"
+                            }
+                        ]
+                    },
+                    "validation": {
+                        "status": "valid"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "a_deny",
+            "type": "rule",
+            "payload": "Access not allowed.",
+            "evidence": [
+                {
+                    "source_id": "src1",
+                    "node_path": "document:doc1",
+                    "locators": {
+                        "primary": {
+                            "type": "text_offset",
+                            "start": 25,
+                            "end": 51
+                        },
+                        "anchors": [
+                            {
+                                "type": "node_path",
+                                "path": "document:doc1"
+                            }
+                        ]
+                    },
+                    "validation": {
+                        "status": "valid"
+                    }
+                }
+            ]
+        }
+    ]
+}

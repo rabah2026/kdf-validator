@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kdf-validator"
+version = "0.1.0"
+description = "Reference validator and conformance runner for KDF v0.1"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "jsonschema>=4.22.0"
+]
+
+[project.scripts]
+kdf = "kdf_validator.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["kdf_validator*"]
