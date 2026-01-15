@@ -2,6 +2,13 @@
 
 All notable changes to the KDF validator are documented in this file.
 
+## [0.1.2] - 2026-01-15
+
+### Added
+- **CLI Helpers**: Added `hash-text` and `fingerprint` commands for canonical source operations (plain text).
+- `kdf_validator.tools`: New module with canonical hashing logic (UTF-8, LF normalization, BOM stripping).
+- Fixture `v005_hash_and_fp_determinism.json`: Validates consistent hashing across platforms.
+
 ## [0.1.1] - 2026-01-15
 
 ### Changed

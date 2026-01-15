@@ -31,6 +31,19 @@ kdf conformance
 kdf validate path\to\artifact.json
 ```
 
+## Evidence Helpers
+
+The CLI includes helpers for calculating canonical hashes and fingerprints for **plain text** documents.
+(See `spec/CANONICALIZATION.md` for PDF/HTML guidance).
+
+```powershell
+# Get canonical source hash
+kdf hash-text path\to\source.txt
+
+# Get span fingerprint
+kdf fingerprint path\to\source.txt <start_offset> <end_offset>
+```
+
 ## Exit codes
 
 * 0: success
