@@ -1,28 +1,28 @@
 {
     "kdf_version": "0.1",
     "dataset": {
-        "id": "e003",
+        "id": "i008",
         "created_at": "2026-01-15T00:00:00Z"
     },
     "sources": [
         {
             "id": "src1",
-            "sha256": "6666666666666666666666666666666666666666666666666666666666666666"
+            "sha256": "8888888888888888888888888888888888888888888888888888888888888888"
         }
     ],
     "documents": [
         {
             "id": "doc1",
             "type": "document",
-            "text": "Rule A: Access allowed. Rule B: Access not allowed.",
+            "text": "Document text",
             "children": []
         }
     ],
     "atoms": [
         {
-            "id": "a_allow",
-            "type": "rule",
-            "payload": "Access allowed.",
+            "id": "a1",
+            "type": "fact",
+            "payload": "First statement.",
             "evidence": [
                 {
                     "source_id": "src1",
@@ -31,7 +31,7 @@
                         "primary": {
                             "type": "text_offset",
                             "start": 0,
-                            "end": 24
+                            "end": 13
                         },
                         "anchors": [
                             {
@@ -41,7 +41,7 @@
                             {
                                 "type": "span_fingerprint",
                                 "algo": "sha256",
-                                "value": "4f143c966d9aa160749ffabe6720275c44e3c5f9a3ef37f2d8afa2db135384b9"
+                                "value": "f6f2ea8f45d8a057c9566a33f99474da2e5c6a6d5a6ccb0df0f4418ed4345127"
                             }
                         ]
                     },
@@ -52,9 +52,9 @@
             ]
         },
         {
-            "id": "a_deny",
-            "type": "rule",
-            "payload": "Access not allowed.",
+            "id": "a1",
+            "type": "fact",
+            "payload": "Second statement with same id.",
             "evidence": [
                 {
                     "source_id": "src1",
@@ -62,8 +62,8 @@
                     "locators": {
                         "primary": {
                             "type": "text_offset",
-                            "start": 25,
-                            "end": 51
+                            "start": 0,
+                            "end": 13
                         },
                         "anchors": [
                             {
@@ -73,7 +73,7 @@
                             {
                                 "type": "span_fingerprint",
                                 "algo": "sha256",
-                                "value": "73caf3e00ef128eae8d2906feea26e801baccd83ddcd29a53610f507f9dbcf93"
+                                "value": "f6f2ea8f45d8a057c9566a33f99474da2e5c6a6d5a6ccb0df0f4418ed4345127"
                             }
                         ]
                     },

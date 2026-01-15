@@ -5,11 +5,12 @@ import re
 import hashlib
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Optional
 
 from jsonschema import Draft202012Validator
 
 
+# v0.1.1: Expanded inference markers (conservative additions)
 INFERENCE_MARKERS = [
     r"\bimplied\b",
     r"\bassumed\b",
@@ -19,7 +20,13 @@ INFERENCE_MARKERS = [
     r"\bprobably\b",
     r"\btherefore\b",
     r"\bwe conclude\b",
-    r"\binferred\b"
+    r"\binferred\b",
+    # v0.1.1 additions
+    r"\bmay\b",
+    r"\bmight\b",
+    r"\bcould\b",
+    r"\blikely\b",
+    r"\bsuggests\b",
 ]
 
 
@@ -50,24 +57,78 @@ def _iter_nodes(nodes: List[Dict[str, Any]], prefix: str = "documents") -> List[
 
 
 def _build_node_index(doc: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
-    # Index by node id across all documents.
+    """Index by node id across all documents."""
     idx: Dict[str, Dict[str, Any]] = {}
     for _, n in _iter_nodes(doc["documents"]):
         idx[n["id"]] = n
     return idx
 
 
-def _resolve_node_path(doc: Dict[str, Any], node_path: str) -> bool:
-    # Minimal resolver for paths like: doc:doc1/section:s1/paragraph:p1
-    # We resolve by checking IDs exist in doc node index.
+def _build_parent_map(doc: Dict[str, Any]) -> Dict[str, Optional[str]]:
+    """Build a map of node_id -> parent_id for path chain validation."""
+    parent_map: Dict[str, Optional[str]] = {}
+    
+    def _traverse(nodes: List[Dict[str, Any]], parent_id: Optional[str] = None) -> None:
+        for n in nodes:
+            node_id = n.get("id")
+            if node_id:
+                parent_map[node_id] = parent_id
+                for c in n.get("children", []) or []:
+                    _traverse([c], node_id)
+    
+    for doc_node in doc.get("documents", []):
+        node_id = doc_node.get("id")
+        if node_id:
+            parent_map[node_id] = None  # Top-level documents have no parent
+            for c in doc_node.get("children", []) or []:
+                _traverse([c], node_id)
+    
+    return parent_map
+
+
+def _resolve_node_path_chain(doc: Dict[str, Any], node_path: str) -> bool:
+    """
+    v0.1.1: Path-chain validation.
+    For a path like "document:doc1/section:s1/paragraph:p1":
+    - doc1 must exist
+    - s1 must exist as a descendant of doc1
+    - p1 must exist as a descendant of s1
+    """
     idx = _build_node_index(doc)
+    parent_map = _build_parent_map(doc)
+    
     parts = node_path.split("/")
+    if not parts:
+        return False
+    
+    # Parse all node IDs from path
+    path_node_ids: List[str] = []
     for part in parts:
         if ":" not in part:
             return False
         _, node_id = part.split(":", 1)
         if node_id not in idx:
             return False
+        path_node_ids.append(node_id)
+    
+    # Validate chain: each node must be a child (direct or indirect) of the previous
+    for i in range(1, len(path_node_ids)):
+        current_id = path_node_ids[i]
+        expected_ancestor = path_node_ids[i - 1]
+        
+        # Walk up parent chain to find expected ancestor
+        found = False
+        walk_id: Optional[str] = current_id
+        while walk_id is not None:
+            parent_id = parent_map.get(walk_id)
+            if parent_id == expected_ancestor:
+                found = True
+                break
+            walk_id = parent_id
+        
+        if not found:
+            return False
+    
     return True
 
 
@@ -102,8 +163,19 @@ def _semantic_validate(doc: Dict[str, Any]) -> List[Issue]:
 
     sources_by_id = {s["id"]: s for s in doc.get("sources", [])}
 
-    # validate evidence against node_path and spans
+    # v0.1.1: documents node ids must be unique across entire artifact
+    all_node_ids: List[str] = []
+    for _, n in _iter_nodes(doc.get("documents", [])):
+        all_node_ids.append(n["id"])
+    if len(set(all_node_ids)) != len(all_node_ids):
+        issues.append(Issue("NODE_ID_DUP", "Duplicate node id values are not allowed across documents", "documents"))
+
+    # v0.1.1: atoms[].id must be unique
     atoms = doc.get("atoms", []) or []
+    atom_ids = [a.get("id") for a in atoms if a.get("id")]
+    if len(set(atom_ids)) != len(atom_ids):
+        issues.append(Issue("ATOM_ID_DUP", "Duplicate atom.id values are not allowed", "atoms"))
+
     for ai, atom in enumerate(atoms):
         a_path = f"atoms[{ai}]"
 
@@ -125,21 +197,21 @@ def _semantic_validate(doc: Dict[str, Any]) -> List[Issue]:
             if source_id not in sources_by_id:
                 issues.append(Issue("BAD_SOURCE", "Evidence source_id does not exist in sources", f"{e_path}.source_id"))
 
-            # node_path must be resolvable if present as anchor or field
+            # v0.1.1: node_path must be resolvable via path-chain validation
             node_path = ev.get("node_path")
             anchors = ev.get("locators", {}).get("anchors", []) or []
             has_node_path_anchor = any(a.get("type") == "node_path" for a in anchors)
+            
             if node_path:
-                if not _resolve_node_path(doc, node_path):
-                    issues.append(Issue("BAD_NODE_PATH", "Evidence node_path not resolvable", f"{e_path}.node_path"))
+                if not _resolve_node_path_chain(doc, node_path):
+                    issues.append(Issue("BAD_NODE_PATH", "Evidence node_path not resolvable or chain invalid", f"{e_path}.node_path"))
 
             if has_node_path_anchor:
-                # anchor path must be resolvable too
                 for aj, a in enumerate(anchors):
                     if a.get("type") == "node_path":
                         ap = a.get("path", "")
-                        if not ap or not _resolve_node_path(doc, ap):
-                            issues.append(Issue("BAD_NODE_PATH_ANCHOR", "Evidence anchor node_path not resolvable", f"{e_path}.locators.anchors[{aj}]"))
+                        if not ap or not _resolve_node_path_chain(doc, ap):
+                            issues.append(Issue("BAD_NODE_PATH_ANCHOR", "Evidence anchor node_path not resolvable or chain invalid", f"{e_path}.locators.anchors[{aj}]"))
 
             primary = ev.get("locators", {}).get("primary", {})
             if primary.get("type") == "text_offset":
@@ -148,29 +220,32 @@ def _semantic_validate(doc: Dict[str, Any]) -> List[Issue]:
                 if not isinstance(start, int) or not isinstance(end, int) or start < 0 or end < 0 or start >= end:
                     issues.append(Issue("BAD_SPAN", "Invalid text_offset span (start must be < end)", f"{e_path}.locators.primary"))
                 # if node_path resolves, check bounds against node text
-                if node_path and _resolve_node_path(doc, node_path):
+                if node_path and _resolve_node_path_chain(doc, node_path):
                     text = _find_node_text_by_path(doc, node_path)
                     if text is not None and isinstance(start, int) and isinstance(end, int) and end > len(text):
                         issues.append(Issue("SPAN_OOB", "Span end exceeds node text length", f"{e_path}.locators.primary"))
 
-            # fingerprint consistency check for sha256(span)
+            # v0.1.1: valid requires fingerprint
             vstatus = ev.get("validation", {}).get("status")
             fp_entries = [a for a in anchors if a.get("type") == "span_fingerprint" and a.get("algo") == "sha256"]
-            if fp_entries and node_path and _resolve_node_path(doc, node_path):
+            
+            if vstatus == "valid":
+                # v0.1.1: If status is valid, MUST have at least one sha256 span_fingerprint
+                if not fp_entries:
+                    issues.append(Issue("VALID_NO_FP", "Evidence with status 'valid' MUST include a sha256 span_fingerprint anchor", f"{e_path}.validation"))
+            
+            # Fingerprint mismatch check
+            if fp_entries and node_path and _resolve_node_path_chain(doc, node_path):
                 text = _find_node_text_by_path(doc, node_path) or ""
                 start = primary.get("start")
                 end = primary.get("end")
                 if isinstance(start, int) and isinstance(end, int) and 0 <= start < end <= len(text):
                     span = text[start:end]
                     expected = _sha256_hex(span)
-                    # Accept drift: if mismatch and status==needs_review is allowed, but status==valid is not
                     for fj, fp in enumerate(fp_entries):
                         val = fp.get("value", "")
                         if val != expected and vstatus == "valid":
                             issues.append(Issue("FP_MISMATCH_VALID", "Evidence marked valid but fingerprint does not match span", f"{e_path}.locators.anchors[{fj}]"))
-
-    # source version change edge: if doc includes meta.source_hash_expected, we can compare (optional)
-    # kept minimal for v0.1
 
     return issues
 
@@ -193,7 +268,7 @@ def validate_file(path: Path) -> Tuple[bool, str]:
 
 
 def _classify_edge(doc: Dict[str, Any]) -> str:
-    # Edge classification by looking at evidence.validation.status values
+    """Edge classification by looking at evidence.validation.status values."""
     statuses = []
     for atom in doc.get("atoms", []) or []:
         for ev in atom.get("evidence", []) or []:
@@ -224,8 +299,6 @@ def run_conformance(root: Path) -> Tuple[bool, str]:
 
             if sec == "edge":
                 cls = _classify_edge(json.loads(f.read_text(encoding="utf-8")))
-                # Edge files must be schema+semantic valid, but classification must not be silently "valid" if they declare needs_review/invalid
-                # Our semantic validator already enforces FP mismatch if status==valid, so drift cases should pass with needs_review.
                 if not ok:
                     overall_ok = False
                     report.append(f"[FAIL] {f.name} (edge file must be structurally valid)")
