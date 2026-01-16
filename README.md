@@ -10,13 +10,16 @@ This repository provides:
 KDF conformance is defined by passing the conformance suite.
 Partial compliance is not compliance.
 
-## Install (Windows / PowerShell)
+## Install
 
-```powershell
-python -m venv .venv
-.\.venv\Scripts\activate
-pip install -U pip
-pip install -e .
+```bash
+pip install kdf-validator
+```
+
+Or from source:
+
+```bash
+pip install git+https://github.com/rabah2026/kdf-validator.git
 ```
 
 ## Run conformance suite

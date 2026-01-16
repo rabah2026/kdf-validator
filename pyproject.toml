@@ -17,3 +17,6 @@ kdf = "kdf_validator.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["kdf_validator*"]
+
+[tool.setuptools.package-data]
+kdf_validator = ["schema/*.json"]
